@@ -3,7 +3,7 @@ import {
   clearResolveCaches,
   resolveModule,
 } from "../dist/core/resolve-module.js";
-import { fixturePath } from "./helpers.ts";
+import { fixturePath } from "../helpers.ts";
 
 describe("resolve-module", () => {
   beforeEach(() => {
