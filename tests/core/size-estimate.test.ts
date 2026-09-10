@@ -22,6 +22,6 @@ describe("size-estimate", () => {
     const walk = walkImportGraph(entry);
     const estimate = estimateGraphBytes(walk.nodes);
     expect(estimate.totalBytes).toBeGreaterThan(50_000);
-    expect(estimate.contributors[0]?.bytes).toBeGreaterThan(40_000);
+    expect(estimate.contributors[0]?.bytes).toBeGreaterThan(50_000);
   });
 });
