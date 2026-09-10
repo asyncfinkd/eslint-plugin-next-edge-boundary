@@ -2,32 +2,27 @@
 
 Your Edge entry doesn’t fail the build. It just gets slower every PR. This rule fails the PR instead.
 
-One convenient import in `middleware.ts` or Next 16 `proxy.ts` can drag in `node:fs` three files deep — or a 400KB local graph — while `next build` still passes. This plugin walks the value-import graph and fails the PR in the editor / CI, with the chain printed on the entry import.
+One convenient import in `middleware.ts` or Next 16 `proxy.ts` can drag in `node:fs` three files deep — or a 400KB local graph — while `next build` still passes. This plugin fails that PR in the editor / CI, on the entry import, with the chain.
+
+<p align="center">
+  <img src="docs/hero.png" alt="ESLint error on src/proxy.ts: notify import flagged because the graph reaches node:fs through notify.ts → write-log.ts" width="920" />
+</p>
+
+The squiggle sits on `./lib/notify` — not on a leaf deep in the tree. That is the point.
 
 ## Before / after
 
 ```ts
 // ❌ proxy.ts — “just reuse notify”
-import { notify } from "@/lib/notify";
-```
-
-```text
-Edge boundary violated: Node / forbidden module "node:fs" is reachable.
-
-  src/proxy.ts
-    → src/lib/notify.ts
-      → src/lib/write-log.ts
-        → node:fs
-
-Split an Edge-safe module that only exports what middleware needs.
+import { notify } from "./lib/notify";
 ```
 
 ```ts
 // ✅ proxy.ts — thin Edge slice
-import { notifyEdge } from "@/lib/notify-edge";
+import { notifyEdge } from "./lib/notify-edge";
 ```
 
-Banning `fs` on the entry file is not enough. The leak is almost always transitive. Byte bloat happens even when nothing Node-shaped shows up — so there is a graph size budget too. One diagnostic on the entry import, not forty leaf errors.
+Banning `fs` on the entry file is not enough. The leak is almost always transitive. Byte bloat happens even when nothing Node-shaped shows up — so there is a graph size budget too.
 
 ## Install
 
