@@ -54,9 +54,54 @@ function readJson(filePath: string): unknown {
 }
 
 function stripJsonComments(text: string): string {
-  return text
-    .replace(/\/\*[\s\S]*?\*\//g, "")
-    .replace(/^\s*\/\/.*$/gm, "");
+  let out = "";
+  let i = 0;
+  while (i < text.length) {
+    const ch = text[i];
+    const next = text[i + 1];
+
+    if (ch === '"' || ch === "'") {
+      const quote = ch;
+      out += ch;
+      i += 1;
+      while (i < text.length) {
+        const c = text[i];
+        out += c;
+        if (c === "\\" && i + 1 < text.length) {
+          out += text[i + 1];
+          i += 2;
+          continue;
+        }
+        if (c === quote) {
+          i += 1;
+          break;
+        }
+        i += 1;
+      }
+      continue;
+    }
+
+    if (ch === "/" && next === "*") {
+      i += 2;
+      while (i + 1 < text.length && !(text[i] === "*" && text[i + 1] === "/")) {
+        i += 1;
+      }
+      i = Math.min(i + 2, text.length);
+      continue;
+    }
+
+    if (ch === "/" && next === "/") {
+      i += 2;
+      while (i < text.length && text[i] !== "\n") {
+        i += 1;
+      }
+      continue;
+    }
+
+    out += ch;
+    i += 1;
+  }
+  return out;
 }
 
 function loadTsConfig(startDir: string, overridePath?: string): TsPathsConfig | null {
@@ -74,9 +119,13 @@ function loadTsConfig(startDir: string, overridePath?: string): TsPathsConfig | 
   }
 
   let dir = startDir;
+  const walked: string[] = [];
   for (;;) {
     const cached = tsconfigCache.get(dir);
     if (cached !== undefined) {
+      for (const d of walked) {
+        tsconfigCache.set(d, cached);
+      }
       return cached;
     }
     for (const name of ["tsconfig.json", "jsconfig.json"]) {
@@ -84,12 +133,18 @@ function loadTsConfig(startDir: string, overridePath?: string): TsPathsConfig | 
       if (fileExists(candidate)) {
         const parsed = parseTsConfigFile(candidate);
         tsconfigCache.set(dir, parsed);
+        for (const d of walked) {
+          tsconfigCache.set(d, parsed);
+        }
         return parsed;
       }
     }
-    tsconfigCache.set(dir, null);
+    walked.push(dir);
     const parent = path.dirname(dir);
     if (parent === dir) {
+      for (const d of walked) {
+        tsconfigCache.set(d, null);
+      }
       return null;
     }
     dir = parent;

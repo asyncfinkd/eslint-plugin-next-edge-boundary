@@ -61,5 +61,10 @@ ruleTester.run("no-node-apis", noNodeApisRule as never, {
       ],
       errors: [{ messageId: "forbidden" }],
     },
+    {
+      code: readFixture("ts-paths-next", "middleware.ts"),
+      filename: fixturePath("ts-paths-next", "middleware.ts"),
+      errors: [{ messageId: "forbidden" }],
+    },
   ],
 });
