@@ -1,16 +1,33 @@
 # eslint-plugin-next-edge-boundary
 
-Your Edge middleware doesn’t fail the build. It just gets slower every PR. This rule fails the PR instead.
+Your Edge entry doesn’t fail the build. It just gets slower every PR. This rule fails the PR instead.
 
-Next.js Edge entrypoints (`middleware.ts`, Next.js 16 `proxy.ts`) silently grow when a convenient import pulls Node APIs or a large dependency graph. Builds often still succeed. Production gets slower — or fails later at the Edge size limit.
+One convenient import in `middleware.ts` or Next 16 `proxy.ts` can drag in `node:fs` three files deep — or a 400KB local graph — while `next build` still passes. This plugin walks the value-import graph and fails the PR in the editor / CI, with the chain printed on the entry import.
 
-This ESLint plugin walks the **static value-import graph** from Edge entries and reports:
+## Before / after
 
-1. Transitive Node builtins / Edge-hostile packages  
-2. Oversized local import graphs (byte budget)  
-3. Barrel / namespace imports at the entry  
+```ts
+// ❌ proxy.ts — “just reuse notify”
+import { notify } from "@/lib/notify";
+```
 
-Diagnostics attach to the **entry file import** that introduced the bad subgraph, with a printable import chain.
+```text
+Edge boundary violated: Node / forbidden module "node:fs" is reachable.
+
+  src/proxy.ts
+    → src/lib/notify.ts
+      → src/lib/write-log.ts
+        → node:fs
+
+Split an Edge-safe module that only exports what middleware needs.
+```
+
+```ts
+// ✅ proxy.ts — thin Edge slice
+import { notifyEdge } from "@/lib/notify-edge";
+```
+
+Banning `fs` on the entry file is not enough. The leak is almost always transitive. Byte bloat happens even when nothing Node-shaped shows up — so there is a graph size budget too. One diagnostic on the entry import, not forty leaf errors.
 
 ## Install
 
@@ -18,9 +35,9 @@ Diagnostics attach to the **entry file import** that introduced the bad subgraph
 pnpm add -D eslint-plugin-next-edge-boundary
 ```
 
-Peer: `eslint` `>=9`. Optional: `typescript` (for projects that already use it).
+Peer: `eslint` `>=9`. Optional: `typescript`.
 
-## Flat config
+### Flat config
 
 ```js
 import nextEdgeBoundary from "eslint-plugin-next-edge-boundary";
@@ -38,60 +55,37 @@ export default [
 ];
 ```
 
-Use `nextEdgeBoundary.configs.strict` for tighter budgets and barrels as errors.
-
-Legacy eslintrc: `configs["recommended-legacy"]` / `configs["strict-legacy"]`.
+Use `configs.strict` for a 32 KiB budget and barrels as errors. Legacy eslintrc: `configs["recommended-legacy"]` / `configs["strict-legacy"]`.
 
 ## Rules
 
-| Rule | What it does |
-| ---- | ------------ |
-| `next-edge-boundary/no-node-apis` | Fail if the value-import graph reaches Node builtins (`fs` / `node:fs`, …) or a denylist package (`sharp`, `pg`, …) |
-| `next-edge-boundary/max-graph-bytes` | Fail if estimated local source bytes exceed a budget (64 KiB recommended, 32 KiB strict) |
-| `next-edge-boundary/no-barrels` | Fail on entry imports of barrels (`@/lib`, `@/utils`, …) and `import * as` namespaces |
+| Rule | What it catches |
+| ---- | ---------------- |
+| `next-edge-boundary/no-node-apis` | Value-import graph reaches Node builtins (`fs` / `node:fs`, …) or a denylist package (`sharp`, `pg`, `mongodb`, …) |
+| `next-edge-boundary/max-graph-bytes` | Estimated local source graph exceeds the budget (64 KiB recommended, 32 KiB strict) |
+| `next-edge-boundary/no-barrels` | Entry imports of barrels (`@/lib`, `@/utils`, …) or `import * as` namespaces |
 
-### Before / after
+`import type` / `export type` are ignored — they erase at compile time.
 
-```ts
-// proxy.ts — fails: transitive node:fs
-import { notify } from "./lib/notify";
-```
-
-```text
-Edge boundary violated: Node / forbidden module "node:fs" is reachable.
-
-  src/proxy.ts
-    → src/lib/notify.ts
-      → src/lib/write-log.ts
-        → node:fs
-
-Split an Edge-safe module that only exports what middleware needs.
-```
-
-```ts
-// proxy.ts — ok: thin Edge-safe slice
-import { notifyEdge } from "./lib/notify-edge";
-```
-
-Type-only imports are ignored (`import type` / `export type`).
-
-## recommended vs strict
+### recommended vs strict
 
 | | recommended | strict |
 | - | ----------- | ------ |
 | `no-node-apis` | error | error |
-| `max-graph-bytes` | error, `max: 65536` | error, `max: 32768` |
+| `max-graph-bytes` | error · `max: 65536` | error · `max: 32768` |
 | `no-barrels` | warn | error |
 
-## vs `no-restricted-imports`
+## Why not `no-restricted-imports` / Next build alone
 
-`no-restricted-imports` only sees the entry file’s direct specifiers. This plugin:
+| Approach | Gap |
+| -------- | --- |
+| `no-restricted-imports` | Direct specifiers only. No transitive walk, no size budget, no chain. |
+| Next / Edge build | Often fails late, and mainly on hard Node APIs. Quiet size regression can ship for weeks. |
+| This plugin | Transitive graph + byte budget + chain on the entry import, at lint time. |
 
-- follows **transitive** local imports and re-exports  
-- estimates **graph size**  
-- prints the **chain** back to the entry import  
+## Options
 
-## Options (shared)
+Shared on every rule:
 
 ```ts
 {
@@ -99,28 +93,22 @@ Type-only imports are ignored (`import type` / `export type`).
   denyModules?: string[];
   ignorePatterns?: string[];
   tsconfigPath?: string;
-  allowImportChains?: string[][]; // last-resort escape hatch
+  allowImportChains?: string[][]; // last resort
 }
 ```
 
-`max-graph-bytes` also accepts `max`, `includeNodeModules`, `packageWeights`.  
-`no-barrels` also accepts `barrelPatterns`, `forbidNamespaceImports`.
-
-## Limitations
-
-- Dynamic `import()` is **ignored** in v1  
-- Not a bundler: sizes are a conservative static estimate of local sources  
-- Does not simulate Turbopack / webpack Edge output byte-for-byte  
-- App Router `export const runtime = 'edge'` detection is deferred to a later release  
+`max-graph-bytes`: `max`, `includeNodeModules`, `packageWeights`  
+`no-barrels`: `barrelPatterns`, `forbidNamespaceImports`
 
 ## Entrypoints
 
-Treated as Edge entries by basename:
+Matched by basename: `middleware.ts` / `.js`, `proxy.ts` / `.js` (Next.js 16). Scope them with ESLint `files` as above.
 
-- `middleware.ts` / `middleware.js`  
-- `proxy.ts` / `proxy.js` (Next.js 16)
+## Limitations
 
-Scope lint with ESLint `files` as shown above.
+- Dynamic `import()` is ignored in v1
+- Not a bundler — local source byte estimate, not Turbopack/webpack output
+- App Router `export const runtime = 'edge'` detection is not in v1
 
 ## License
 
