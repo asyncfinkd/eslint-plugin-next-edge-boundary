@@ -12,15 +12,14 @@ const rules = {
   "no-barrels": noBarrelsRule,
 };
 
-const plugin: ESLint.Plugin = {
+const plugin = {
   meta: {
     name: PACKAGE_NAME,
     version: "0.1.0",
   },
-  // RuleModule shapes are intentionally thin adapters for ESLint 9.
   rules: rules as ESLint.Plugin["rules"],
-  configs: {},
-} as ESLint.Plugin;
+  configs: {} as ESLint.Plugin["configs"],
+} satisfies ESLint.Plugin;
 
 function withPlugin(config: Linter.Config): Linter.Config {
   return {
