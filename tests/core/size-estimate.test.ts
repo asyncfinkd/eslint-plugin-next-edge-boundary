@@ -1,10 +1,14 @@
-import { describe, expect, it } from "vitest";
-import { estimateFileBytes, estimateGraphBytes } from "../dist/core/size-estimate.js";
-import { walkImportGraph } from "../dist/core/import-graph.js";
-import { clearGraphCaches } from "../dist/core/import-graph.js";
-import { clearResolveCaches } from "../dist/core/resolve-module.js";
-import { fixturePath } from "../helpers";
-import { beforeEach } from "vitest";
+import { describe, expect, it, beforeEach } from "vitest";
+import { distUrl } from "../dist-url.js";
+
+const { estimateFileBytes, estimateGraphBytes } = await import(
+  distUrl("core", "size-estimate.js")
+);
+const { walkImportGraph, clearGraphCaches } = await import(
+  distUrl("core", "import-graph.js")
+);
+const { clearResolveCaches } = await import(distUrl("core", "resolve-module.js"));
+const { fixturePath } = await import("../helpers.js");
 
 describe("size-estimate", () => {
   beforeEach(() => {

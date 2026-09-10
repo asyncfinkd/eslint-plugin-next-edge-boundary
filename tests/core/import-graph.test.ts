@@ -1,12 +1,14 @@
 import { describe, expect, it, beforeEach } from "vitest";
-import {
+import { distUrl } from "../dist-url.js";
+
+const {
   clearGraphCaches,
   collectValueImportSpecifiers,
   findDeniedPaths,
   walkImportGraph,
-} from "../dist/core/import-graph.js";
-import { clearResolveCaches } from "../dist/core/resolve-module.js";
-import { fixturePath } from "../helpers";
+} = await import(distUrl("core", "import-graph.js"));
+const { clearResolveCaches } = await import(distUrl("core", "resolve-module.js"));
+const { fixturePath } = await import("../helpers.js");
 
 describe("import-graph", () => {
   beforeEach(() => {

@@ -1,9 +1,10 @@
 import { describe, expect, it, beforeEach } from "vitest";
-import {
-  clearResolveCaches,
-  resolveModule,
-} from "../dist/core/resolve-module.js";
-import { fixturePath } from "../helpers";
+import { distUrl } from "../dist-url.js";
+
+const { clearResolveCaches, resolveModule } = await import(
+  distUrl("core", "resolve-module.js")
+);
+const { fixturePath } = await import("../helpers.js");
 
 describe("resolve-module", () => {
   beforeEach(() => {
