@@ -2,10 +2,12 @@ import "../rule-tester.js";
 import { RuleTester } from "eslint";
 import tsParser from "@typescript-eslint/parser";
 import { beforeEach } from "vitest";
-import { clearGraphCaches } from "../dist/core/import-graph.js";
-import { clearResolveCaches } from "../dist/core/resolve-module.js";
-import { maxGraphBytesRule } from "../dist/rules/max-graph-bytes.js";
+import { distUrl } from "../dist-url.js";
 import { readFixture, fixturePath } from "../helpers.js";
+
+const { clearGraphCaches } = await import(distUrl("core", "import-graph.js"));
+const { clearResolveCaches } = await import(distUrl("core", "resolve-module.js"));
+const { maxGraphBytesRule } = await import(distUrl("rules", "max-graph-bytes.js"));
 
 const ruleTester = new RuleTester({
   languageOptions: {

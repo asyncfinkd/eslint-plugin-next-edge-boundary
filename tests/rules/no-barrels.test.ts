@@ -1,8 +1,10 @@
 import "../rule-tester.js";
 import { RuleTester } from "eslint";
 import tsParser from "@typescript-eslint/parser";
-import { noBarrelsRule } from "../dist/rules/no-barrels.js";
+import { distUrl } from "../dist-url.js";
 import { readFixture, fixturePath } from "../helpers.js";
+
+const { noBarrelsRule } = await import(distUrl("rules", "no-barrels.js"));
 
 const ruleTester = new RuleTester({
   languageOptions: {
