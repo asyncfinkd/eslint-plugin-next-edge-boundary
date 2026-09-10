@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { estimateFileBytes, estimateGraphBytes } from "../src/core/size-estimate.js";
-import { walkImportGraph } from "../src/core/import-graph.js";
-import { clearGraphCaches } from "../src/core/import-graph.js";
-import { clearResolveCaches } from "../src/core/resolve-module.js";
-import { fixturePath } from "../helpers.js";
+import { estimateFileBytes, estimateGraphBytes } from "../dist/core/size-estimate.js";
+import { walkImportGraph } from "../dist/core/import-graph.js";
+import { clearGraphCaches } from "../dist/core/import-graph.js";
+import { clearResolveCaches } from "../dist/core/resolve-module.js";
+import { fixturePath } from "../helpers.ts";
 import { beforeEach } from "vitest";
 
 describe("size-estimate", () => {

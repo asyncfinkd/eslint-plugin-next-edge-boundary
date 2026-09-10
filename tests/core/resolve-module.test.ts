@@ -2,8 +2,8 @@ import { describe, expect, it, beforeEach } from "vitest";
 import {
   clearResolveCaches,
   resolveModule,
-} from "../src/core/resolve-module.js";
-import { fixturePath } from "./helpers.js";
+} from "../dist/core/resolve-module.js";
+import { fixturePath } from "./helpers.ts";
 
 describe("resolve-module", () => {
   beforeEach(() => {

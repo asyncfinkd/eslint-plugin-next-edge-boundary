@@ -4,9 +4,9 @@ import {
   collectValueImportSpecifiers,
   findDeniedPaths,
   walkImportGraph,
-} from "../src/core/import-graph.js";
-import { clearResolveCaches } from "../src/core/resolve-module.js";
-import { fixturePath } from "../helpers.js";
+} from "../dist/core/import-graph.js";
+import { clearResolveCaches } from "../dist/core/resolve-module.js";
+import { fixturePath } from "../helpers.ts";
 
 describe("import-graph", () => {
   beforeEach(() => {
