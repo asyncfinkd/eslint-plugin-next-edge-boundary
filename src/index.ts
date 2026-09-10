@@ -18,7 +18,7 @@ const plugin = {
     version: "0.1.0",
   },
   rules: rules as ESLint.Plugin["rules"],
-  configs: {} as ESLint.Plugin["configs"],
+  configs: {} as NonNullable<ESLint.Plugin["configs"]>,
 } satisfies ESLint.Plugin;
 
 function withPlugin(config: Linter.Config): Linter.Config {
@@ -30,17 +30,15 @@ function withPlugin(config: Linter.Config): Linter.Config {
   };
 }
 
-plugin.configs = {
-  recommended: withPlugin(recommendedConfig),
-  strict: withPlugin(strictConfig),
-  "recommended-legacy": {
-    plugins: ["next-edge-boundary"],
-    rules: recommendedConfig.rules,
-  },
-  "strict-legacy": {
-    plugins: ["next-edge-boundary"],
-    rules: strictConfig.rules,
-  },
+plugin.configs.recommended = withPlugin(recommendedConfig);
+plugin.configs.strict = withPlugin(strictConfig);
+plugin.configs["recommended-legacy"] = {
+  plugins: ["next-edge-boundary"],
+  rules: recommendedConfig.rules,
+};
+plugin.configs["strict-legacy"] = {
+  plugins: ["next-edge-boundary"],
+  rules: strictConfig.rules,
 };
 
 export default plugin;
