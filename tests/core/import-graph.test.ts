@@ -6,7 +6,7 @@ import {
   walkImportGraph,
 } from "../dist/core/import-graph.js";
 import { clearResolveCaches } from "../dist/core/resolve-module.js";
-import { fixturePath } from "../helpers.ts";
+import { fixturePath } from "../helpers";
 
 describe("import-graph", () => {
   beforeEach(() => {

@@ -3,7 +3,7 @@ import { estimateFileBytes, estimateGraphBytes } from "../dist/core/size-estimat
 import { walkImportGraph } from "../dist/core/import-graph.js";
 import { clearGraphCaches } from "../dist/core/import-graph.js";
 import { clearResolveCaches } from "../dist/core/resolve-module.js";
-import { fixturePath } from "../helpers.ts";
+import { fixturePath } from "../helpers";
 import { beforeEach } from "vitest";
 
 describe("size-estimate", () => {

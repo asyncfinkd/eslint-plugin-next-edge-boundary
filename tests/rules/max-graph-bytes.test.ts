@@ -4,7 +4,7 @@ import { beforeEach } from "vitest";
 import { clearGraphCaches } from "../dist/core/import-graph.js";
 import { clearResolveCaches } from "../dist/core/resolve-module.js";
 import { maxGraphBytesRule } from "../dist/rules/max-graph-bytes.js";
-import { readFixture, fixturePath } from "../helpers.ts";
+import { readFixture, fixturePath } from "../helpers";
 
 const ruleTester = new RuleTester({
   languageOptions: {
