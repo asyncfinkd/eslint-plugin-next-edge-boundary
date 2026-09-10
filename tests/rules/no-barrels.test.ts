@@ -1,7 +1,8 @@
+import "../rule-tester.js";
 import { RuleTester } from "eslint";
 import tsParser from "@typescript-eslint/parser";
 import { noBarrelsRule } from "../dist/rules/no-barrels.js";
-import { readFixture, fixturePath } from "../helpers";
+import { readFixture, fixturePath } from "../helpers.js";
 
 const ruleTester = new RuleTester({
   languageOptions: {
