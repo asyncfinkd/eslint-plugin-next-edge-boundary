@@ -1,5 +1,3 @@
-# eslint-plugin-next-edge-boundary
-
 Your Edge entry doesn’t fail the build. It just gets slower every PR. This rule fails the PR instead.
 
 One convenient import in `middleware.ts` or Next 16 `proxy.ts` can drag in `node:fs` three files deep — or a 400KB local graph — while `next build` still passes. This plugin fails that PR in the editor / CI, on the entry import, with the chain.
@@ -39,12 +37,7 @@ import nextEdgeBoundary from "eslint-plugin-next-edge-boundary";
 
 export default [
   {
-    files: [
-      "middleware.ts",
-      "src/middleware.ts",
-      "proxy.ts",
-      "src/proxy.ts",
-    ],
+    files: ["middleware.ts", "src/middleware.ts", "proxy.ts", "src/proxy.ts"],
     ...nextEdgeBoundary.configs.recommended,
   },
 ];
@@ -54,29 +47,29 @@ Use `configs.strict` for a 32 KiB budget and barrels as errors. Legacy eslintrc:
 
 ## Rules
 
-| Rule | What it catches |
-| ---- | ---------------- |
-| `next-edge-boundary/no-node-apis` | Value-import graph reaches Node builtins (`fs` / `node:fs`, …) or a denylist package (`sharp`, `pg`, `mongodb`, …) |
-| `next-edge-boundary/max-graph-bytes` | Estimated local source graph exceeds the budget (64 KiB recommended, 32 KiB strict) |
-| `next-edge-boundary/no-barrels` | Entry imports of barrels (`@/lib`, `@/utils`, …) or `import * as` namespaces |
+| Rule                                 | What it catches                                                                                                    |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------ |
+| `next-edge-boundary/no-node-apis`    | Value-import graph reaches Node builtins (`fs` / `node:fs`, …) or a denylist package (`sharp`, `pg`, `mongodb`, …) |
+| `next-edge-boundary/max-graph-bytes` | Estimated local source graph exceeds the budget (64 KiB recommended, 32 KiB strict)                                |
+| `next-edge-boundary/no-barrels`      | Entry imports of barrels (`@/lib`, `@/utils`, …) or `import * as` namespaces                                       |
 
 `import type` / `export type` are ignored — they erase at compile time.
 
 ### recommended vs strict
 
-| | recommended | strict |
-| - | ----------- | ------ |
-| `no-node-apis` | error | error |
+|                   | recommended          | strict               |
+| ----------------- | -------------------- | -------------------- |
+| `no-node-apis`    | error                | error                |
 | `max-graph-bytes` | error · `max: 65536` | error · `max: 32768` |
-| `no-barrels` | warn | error |
+| `no-barrels`      | warn                 | error                |
 
 ## Why not `no-restricted-imports` / Next build alone
 
-| Approach | Gap |
-| -------- | --- |
-| `no-restricted-imports` | Direct specifiers only. No transitive walk, no size budget, no chain. |
-| Next / Edge build | Often fails late, and mainly on hard Node APIs. Quiet size regression can ship for weeks. |
-| This plugin | Transitive graph + byte budget + chain on the entry import, at lint time. |
+| Approach                | Gap                                                                                       |
+| ----------------------- | ----------------------------------------------------------------------------------------- |
+| `no-restricted-imports` | Direct specifiers only. No transitive walk, no size budget, no chain.                     |
+| Next / Edge build       | Often fails late, and mainly on hard Node APIs. Quiet size regression can ship for weeks. |
+| This plugin             | Transitive graph + byte budget + chain on the entry import, at lint time.                 |
 
 ## Options
 
