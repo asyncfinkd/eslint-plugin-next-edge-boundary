@@ -61,9 +61,10 @@ export function estimateGraphBytes(
     }
 
     if (node.kind === "package" && options.includeNodeModules) {
-      const bytes = weights[node.packageName] ?? 5_000;
+      const packageName = node.packageName ?? node.id;
+      const bytes = weights[packageName] ?? 5_000;
       totalBytes += bytes;
-      contributors.push({ id: node.packageName, bytes });
+      contributors.push({ id: packageName, bytes });
     }
   }
 

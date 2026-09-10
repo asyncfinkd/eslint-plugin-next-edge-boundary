@@ -10,16 +10,17 @@ const rules = {
   "no-node-apis": noNodeApisRule,
   "max-graph-bytes": maxGraphBytesRule,
   "no-barrels": noBarrelsRule,
-} as const;
+};
 
-const plugin = {
+const plugin: ESLint.Plugin = {
   meta: {
     name: PACKAGE_NAME,
     version: "0.1.0",
   },
-  rules,
-  configs: {} as Record<string, Linter.Config | Linter.LegacyConfig>,
-} satisfies ESLint.Plugin;
+  // RuleModule shapes are intentionally thin adapters for ESLint 9.
+  rules: rules as ESLint.Plugin["rules"],
+  configs: {},
+} as ESLint.Plugin;
 
 function withPlugin(config: Linter.Config): Linter.Config {
   return {
@@ -30,17 +31,23 @@ function withPlugin(config: Linter.Config): Linter.Config {
   };
 }
 
-plugin.configs.recommended = withPlugin(recommendedConfig);
-plugin.configs.strict = withPlugin(strictConfig);
-plugin.configs["recommended-legacy"] = {
-  plugins: ["next-edge-boundary"],
-  rules: recommendedConfig.rules,
-};
-plugin.configs["strict-legacy"] = {
-  plugins: ["next-edge-boundary"],
-  rules: strictConfig.rules,
+plugin.configs = {
+  recommended: withPlugin(recommendedConfig),
+  strict: withPlugin(strictConfig),
+  "recommended-legacy": {
+    plugins: ["next-edge-boundary"],
+    rules: recommendedConfig.rules,
+  },
+  "strict-legacy": {
+    plugins: ["next-edge-boundary"],
+    rules: strictConfig.rules,
+  },
 };
 
 export default plugin;
 export { rules };
-export type { SharedOptions, MaxGraphBytesOptions, NoBarrelsOptions } from "./core/options.js";
+export type {
+  SharedOptions,
+  MaxGraphBytesOptions,
+  NoBarrelsOptions,
+} from "./core/options.js";
