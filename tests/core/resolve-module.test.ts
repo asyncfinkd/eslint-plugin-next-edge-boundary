@@ -42,4 +42,33 @@ describe("resolve-module", () => {
     const result = resolveModule("fs", from);
     expect(result).toEqual({ kind: "builtin", id: "node:fs" });
   });
+
+  it("resolves @/* aliases in Next-like tsconfig with **/*.ts includes", () => {
+    const from = fixturePath("ts-paths-next", "middleware.ts");
+    const result = resolveModule("@/lib/ping", from, {
+      tsconfigPath: fixturePath("ts-paths-next", "tsconfig.json"),
+    });
+    expect(result.kind).toBe("file");
+    if (result.kind === "file") {
+      expect(result.id).toBe(fixturePath("ts-paths-next", "src", "lib", "ping.ts"));
+    }
+  });
+
+  it("auto-discovers Next-like tsconfig from a nested entry without tsconfigPath", () => {
+    const from = fixturePath("ts-paths-next", "middleware.ts");
+    const result = resolveModule("@/lib/ping", from);
+    expect(result.kind).toBe("file");
+    if (result.kind === "file") {
+      expect(result.id).toBe(fixturePath("ts-paths-next", "src", "lib", "ping.ts"));
+    }
+  });
+
+  it("reuses parent tsconfig when resolving repeatedly from nested dirs", () => {
+    const from = fixturePath("ts-paths-next", "src", "lib", "boom.ts");
+    const first = resolveModule("@/lib/ping", from);
+    const second = resolveModule("@/lib/ping", from);
+    expect(first.kind).toBe("file");
+    expect(second.kind).toBe("file");
+  });
+
 });

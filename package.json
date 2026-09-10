@@ -1,6 +1,6 @@
 {
   "name": "eslint-plugin-next-edge-boundary",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Lint-time import-graph guardrails for Next.js Edge entries — transitive Node denial, byte budgets, and barrel bans.",
   "license": "MIT",
   "type": "module",
