@@ -65,8 +65,12 @@ export const maxGraphBytesRule: RuleModule = {
       specifier: string;
       node: TSESTree.Node;
     }> = [];
+    let programNode: TSESTree.Program | null = null;
 
     return {
+      Program(node: TSESTree.Program) {
+        programNode = node;
+      },
       ImportDeclaration(node: TSESTree.ImportDeclaration) {
         if (node.importKind === "type") {
           return;
@@ -95,50 +99,40 @@ export const maxGraphBytesRule: RuleModule = {
         entryImports.push({ specifier: node.source.value, node });
       },
       "Program:exit"() {
-        if (entryImports.length === 0) {
-          const walk = walkImportGraph(filename, options);
-          const estimate = estimateGraphBytes(walk.nodes, options);
-          if (estimate.totalBytes <= max) {
-            return;
-          }
+        const walk = walkImportGraph(filename, options);
+        const estimate = estimateGraphBytes(walk.nodes, {
+          includeNodeModules: options.includeNodeModules,
+          packageWeights: options.packageWeights,
+          ignorePatterns: options.ignorePatterns,
+        });
+
+        if (estimate.totalBytes <= max) {
           return;
         }
 
-        for (const entryImport of entryImports) {
-          const walk = walkImportGraph(filename, {
-            ...options,
-            seedSpecifiers: [entryImport.specifier],
-          });
-          const estimate = estimateGraphBytes(walk.nodes, {
-            includeNodeModules: options.includeNodeModules,
-            packageWeights: options.packageWeights,
-            ignorePatterns: options.ignorePatterns,
-          });
+        const top = estimate.contributors.slice(0, 5);
+        const contributors = top
+          .map((item) => {
+            const label = formatChain([item.id]).trim();
+            const size = formatBytes(item.bytes).padStart(5, " ");
+            return `  +${size}  ${label}`;
+          })
+          .join("\n");
 
-          if (estimate.totalBytes <= max) {
-            continue;
-          }
-
-          const top = estimate.contributors.slice(0, 5);
-          const contributors = top
-            .map((item) => {
-              const label = formatChain([item.id]).trim();
-              const size = formatBytes(item.bytes).padStart(5, " ");
-              return `  +${size}  ${label}`;
-            })
-            .join("\n");
-
-          context.report({
-            node: entryImport.node,
-            messageId: "tooLarge",
-            data: {
-              total: formatBytes(estimate.totalBytes),
-              budget: formatBytes(max),
-              contributors,
-            },
-          });
-          break;
+        const reportNode = entryImports[0]?.node ?? programNode;
+        if (!reportNode) {
+          return;
         }
+
+        context.report({
+          node: reportNode,
+          messageId: "tooLarge",
+          data: {
+            total: formatBytes(estimate.totalBytes),
+            budget: formatBytes(max),
+            contributors,
+          },
+        });
       },
     };
   },
